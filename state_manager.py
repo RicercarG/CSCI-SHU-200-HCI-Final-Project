@@ -9,18 +9,15 @@ def init_state():
 
     if "operation" not in st.session_state:
         st.session_state.operation = None
-    
-    # if "ride_started" not in st.session_state:
-    #     st.session_state.ride_started = False
-
-    # if "charge_started" not in st.session_state:
-    #     st.session_state.charge_started = False
 
     if "history" not in st.session_state:
         st.session_state.history = None
 
-    if "current_page" not in st.session_state:
-        st.session_state.current_page = "login"
+    # if "current_page" not in st.session_state:
+    #     st.session_state.current_page = "login"
+
+    if "page_to_switch" not in st.session_state:
+        st.session_state.page_to_switch = None
 
 class User():
     def __init__(self):

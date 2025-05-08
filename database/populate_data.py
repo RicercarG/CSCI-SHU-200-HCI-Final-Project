@@ -19,7 +19,7 @@ DB_CONFIG = {
 
 # Constants for data generation
 NUM_USERS = 20
-NUM_CARS_PER_USER_MAX = 2
+NUM_CARS_PER_USER_MAX = 3
 NUM_HISTORY_RECORDS_PER_CAR = 50
 
 CAR_MODELS = [
@@ -30,6 +30,10 @@ CAR_MODELS = [
 ]
 
 WEATHER_CONDITIONS = ["Sunny", "Cloudy", "Rainy", "Snowy", "Windy", "Foggy", "Stormy"]
+
+# NYC bounding box (approximate)
+MIN_LAT, MAX_LAT = 30.70, 31.53
+MIN_LNG, MAX_LNG = 120.85, 122.12
 
 # Helper function to hash passwords (simple SHA256 for simulation)
 def hash_password(password):
@@ -106,8 +110,10 @@ def generate_user_car_history_data(cursor):
             start_date = start_datetime.date()
             start_time = start_datetime.time()
 
-            start_lat = decimal.Decimal(fake.latitude())
-            start_lon = decimal.Decimal(fake.longitude())
+            # start_lat = decimal.Decimal(fake.latitude())
+            # start_lon = decimal.Decimal(fake.longitude())
+            start_lat = decimal.Decimal(random.uniform(MIN_LAT, MAX_LAT))
+            start_lon = decimal.Decimal(random.uniform(MIN_LNG, MAX_LNG))
             
             weather = random.choice(WEATHER_CONDITIONS)
             paid_amount = None
@@ -133,8 +139,10 @@ def generate_user_car_history_data(cursor):
             end_date = end_datetime.date()
             end_time = end_datetime.time()
             
-            end_lat = decimal.Decimal(fake.latitude())
-            end_lon = decimal.Decimal(fake.longitude())
+            # end_lat = decimal.Decimal(fake.latitude())
+            # end_lon = decimal.Decimal(fake.longitude())
+            end_lat = decimal.Decimal(random.uniform(MIN_LAT, MAX_LAT))
+            end_lon = decimal.Decimal(random.uniform(MIN_LNG, MAX_LNG))
             
             end_battery_level = max(0, min(100, current_battery_level + battery_change))
 

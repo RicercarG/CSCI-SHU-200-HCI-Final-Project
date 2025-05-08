@@ -50,14 +50,16 @@ def ui_landing_page():
         if st.session_state.current_car.battery_level > 80:
             # st.write(f"This car is full of juice. Have fun driving!")
             text = "This car is full of juice. Have fun driving!"
-            func = partial(stream_text, text=text)
-            # st.write_stream(func)
-            st.write_stream(func)
+            
 
         elif 80 > st.session_state.current_car.battery_level >= 30:
-            st.write(f"This car is almost full. Have fun driving!")
+            text = "This car is half full. Watchout for the range!"
+            # st.write(f"This car is almost full. Have fun driving!")
         else:
-            st.write(f"This car is low on juice. Please charge it before driving.")
+            text = "This car is low on juice. Please charge it before driving."
+            # st.write(f"This car is low on juice. Please charge it before driving.")
+        func = partial(stream_text, text=text)
+        st.write_stream(func)
 
     # with st.container(border=False):
     #     if st.button("Nearby Charging Locations", use_container_width=True):
@@ -78,7 +80,15 @@ def ui_landing_page():
         """,
         ttl=0,
     )
-    st.dataframe(ride_history_df, hide_index=True)
+    history_selection = st.dataframe(
+        ride_history_df, 
+        hide_index=True,
+        selection_mode="single-row",
+        column_order=["type", "start_date", "start_time", "end_date", "end_time", "weather", "paid", "end_battery_level"],
+        # on_select=stop_ride_callback,
+        )
+    
+    st.write(history_selection)
 
 def stream_text(text):
     for char in text:
@@ -88,8 +98,8 @@ def stream_text(text):
 
 def get_location_coordinates():
     # random generater latitude and longitude
-    latitude = random.uniform(-90, 90)
-    longitude = random.uniform(-180, 180)
+    latitude = random.uniform(30.70, 31.53)
+    longitude = random.uniform(120.85, 122.12)
 
     return (latitude, longitude)
 
