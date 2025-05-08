@@ -5,19 +5,32 @@ def init_state():
         st.session_state.user = User()
 
     if "current_car" not in st.session_state:
-        st.session_state.current_car = None
-    
-    if "ride_started" not in st.session_state:
-        st.session_state.ride_started = False
+        st.session_state.current_car = Car()
 
-    if "charge_started" not in st.session_state:
-        st.session_state.charge_started = False
+    if "operation" not in st.session_state:
+        st.session_state.operation = None
+    
+    # if "ride_started" not in st.session_state:
+    #     st.session_state.ride_started = False
+
+    # if "charge_started" not in st.session_state:
+    #     st.session_state.charge_started = False
 
     if "history" not in st.session_state:
         st.session_state.history = None
 
+    if "current_page" not in st.session_state:
+        st.session_state.current_page = "login"
+
 class User():
     def __init__(self):
         self.is_logged_in = False
+        self.id = None
         self.username = None
         self.password = None
+
+class Car():
+    def __init__(self):
+        self.user_car_id = None
+        self.car_model = None
+        self.battery_level = 100
