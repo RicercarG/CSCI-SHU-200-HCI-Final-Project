@@ -48,16 +48,11 @@ def ui_landing_page():
         st.progress(st.session_state.current_car.battery_level / 100, text=f"Battery Level: {st.session_state.current_car.battery_level}%")
 
         if st.session_state.current_car.battery_level > 80:
-            # st.write(f"This car is full of juice. Have fun driving!")
             text = "This car is full of juice. Have fun driving!"
-            
-
         elif 80 > st.session_state.current_car.battery_level >= 30:
             text = "This car is half full. Watchout for the range!"
-            # st.write(f"This car is almost full. Have fun driving!")
         else:
             text = "This car is low on juice. Please charge it before driving."
-            # st.write(f"This car is low on juice. Please charge it before driving.")
         func = partial(stream_text, text=text)
         st.write_stream(func)
 
@@ -170,13 +165,6 @@ def commit_data_callback(form_params):
         sql = text(f"INSERT INTO user_car_history_table ({columns}) VALUES ({placeholders})")
         session.execute(sql, form_params)
         session.commit()
-        # print("Data committed to database")
-
-        # # add this dict as a row of the pd dataframe
-        # if st.session_state.history is None:
-        #     st.session_state.history = pd.DataFrame([form_params])
-        # else:
-        #     st.session_state.history.loc[len(st.session_state.history)] = form_params
 
 
 def start_operation_callback(operation):
@@ -197,41 +185,9 @@ def stop_ride_callback():
 
     form_params = form_params_template(operation="Ride")
 
-    # form_params = {}
-
-    # form_params["user_car_id"] = st.session_state.current_car.user_car_id
-    # form_params["username"] = st.session_state.user.username
-    # form_params["car_model"] = st.session_state.current_car.car_model
-    
-    # form_params["type"] = "Ride"
-
-    # with st.expander(label="Configure Ride Start Time & Location"):
-    #     form_params["start_date"] = st.date_input("Start Date", value=st.session_state.ride_start_date)
-    #     form_params["start_time"] = st.time_input("Start Time", value=st.session_state.ride_start_time)
-    #     form_params["start_location_latitude"] = st.text_input("Start Location", value=st.session_state.ride_start_location[0])
-    #     form_params["start_location_longitude"] = st.text_input("Start Location", value=st.session_state.ride_start_location[1])
-    
-    # with st.expander(label="Configure Ride End Time & Location"):
-    #     form_params["end_date"] = st.date_input("End Date")
-    #     form_params["end_time"] = st.time_input("End Time")
-    #     form_params["end_location_latitude"] = st.text_input("Start Location", value=st.session_state.ride_end_location[0])
-    #     form_params["end_location_longitude"] = st.text_input("Start Location", value=st.session_state.ride_end_location[1])
-    # form_params["weather"] = st.selectbox("Weather", WEATHER_CONDITIONS)
-
-    # form_params["paid"] = None
-    # form_params["end_battery_level"] = st.number_input("Current Battery Level", min_value=0, max_value=100)
-
     if st.button("Log this ride!", type="primary", use_container_width=True):
         commit_data_callback(form_params=form_params)
         st.rerun()
-
-
-
-# def start_charge_callback():
-#     st.session_state.charge_started = True
-#     st.session_state.charge_start_date = datetime.now().date()
-#     st.session_state.charge_start_time = datetime.now().time()
-#     st.session_state.charge_start_location = get_location_coordinates()
 
 @st.dialog("Log the charge")
 def stop_charge_callback():
@@ -239,7 +195,6 @@ def stop_charge_callback():
     st.session_state.operation_end_date = datetime.now().date()
     st.session_state.operation_end_time = datetime.now().time()
     st.session_state.operation_end_location = get_location_coordinates()
-    # st.session_state.charge_started = False
     st.write("Charge stopped")
 
     form_params = form_params_template(operation="Charge")
@@ -247,27 +202,6 @@ def stop_charge_callback():
     if st.button("Log this charge!", type="primary", use_container_width=True):
         commit_data_callback(form_params=form_params)
         st.rerun()
-
-    # form_params = {}
-    # form_params["type"] = "Ride"
-    # form_params["start_date"] = st.date_input("Start Date", value=st.session_state.charge_start_date)
-    # form_params["start_time"] = st.time_input("Start Time", value=st.session_state.charge_start_time)
-    # form_params["start_location"] = st.text_input("Start Location", value=st.session_state.charge_start_location)
-    # form_params["end_date"] = st.date_input("End Date")
-    # form_params["end_time"] = st.time_input("End Time")
-    # form_params["end_location"] = st.text_input("End Location", value=get_location_coordinates())
-    # form_params["weather"] = st.selectbox("weather", ["Sunny", "Rainy"])
-    # form_params["car"] = st.session_state.current_car
-    # form_params["paid"] = st.number_input("paid", value=0)
-
-    # if st.button("Log this charge!", type="primary", use_container_width=True):
-    #     # add this dict as a row of the pd dataframe
-    #     if st.session_state.history is None:
-    #         st.session_state.history = pd.DataFrame([form_params])
-    #     else:
-    #         st.session_state.history.loc[len(st.session_state.history)] = form_params
-        
-    #     st.rerun()
 
 def ride_logger():
     if st.session_state.operation == "Ride":

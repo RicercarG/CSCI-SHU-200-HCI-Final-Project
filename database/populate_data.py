@@ -1,10 +1,12 @@
 #!/usr/bin/env python3.11
+import os
 import mysql.connector
 import random
 import datetime
 import decimal
 from faker import Faker
 import hashlib
+import pandas as pd
 
 # Initialize Faker for generating mock data
 fake = Faker()
@@ -18,9 +20,9 @@ DB_CONFIG = {
 }
 
 # Constants for data generation
-NUM_USERS = 20
+NUM_USERS = 30
 NUM_CARS_PER_USER_MAX = 3
-NUM_HISTORY_RECORDS_PER_CAR = 50
+NUM_HISTORY_RECORDS_PER_CAR = 500
 
 CAR_MODELS = [
     "Tesla Model 3", "Tesla Model S", "Tesla Model X", "Tesla Model Y",
@@ -177,7 +179,24 @@ def generate_user_car_history_data(cursor):
     else:
         print("No history records generated.")
 
-def main():
+
+def export_user_car_history_data(conn):
+    # load the table as a pd dataframe, and export to csv
+    query = "SELECT * FROM user_car_history_table"
+
+    df = pd.read_sql(query, conn)
+    save_root = "cached_table"
+    os.makedirs(save_root, exist_ok=True)
+    save_path = os.path.join(save_root, "user_car_history_table.csv")
+    df.to_csv(save_path, index=False)
+
+
+
+
+def main(
+    gen_data = True,
+    export_data = True,
+):
     conn = None
     try:
         conn = mysql.connector.connect(**DB_CONFIG)
@@ -194,16 +213,22 @@ def main():
         # conn.commit()
         # print("Existing data cleared.")
 
-        generate_user_data(cursor)
-        conn.commit()
-        
-        generate_user_car_data(cursor)
-        conn.commit()
-        
-        generate_user_car_history_data(cursor)
-        conn.commit()
+        if gen_data:
 
-        print("\nMock data generation and population complete.")
+            generate_user_data(cursor)
+            conn.commit()
+            
+            generate_user_car_data(cursor)
+            conn.commit()
+            
+            generate_user_car_history_data(cursor)
+            conn.commit()
+
+            print("\nMock data generation and population complete.")
+        
+        if export_data:
+            export_user_car_history_data(conn)
+            print("\nUser car history data exported to CSV.")
 
     except mysql.connector.Error as err:
         print(f"MySQL Error: {err}")
@@ -214,5 +239,8 @@ def main():
             print("MySQL connection closed.")
 
 if __name__ == "__main__":
-    main()
+    main(
+        gen_data=False,
+        export_data=True
+    )
 
