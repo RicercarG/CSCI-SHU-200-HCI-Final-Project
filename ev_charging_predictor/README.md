@@ -51,7 +51,7 @@ pip install -r requirements.txt
 ### Training a New Model
 
 ```bash
-python -m ev_charging_predictor.main --mode train --data path/to/data.csv --model_dir models/ --epochs 20
+python -m ev_charging_predictor.main --mode train --data path/to/data.csv --model_path models/ --epochs 20
 ```
 
 ### Making Predictions

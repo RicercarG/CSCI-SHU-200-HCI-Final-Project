@@ -1,7 +1,11 @@
 import streamlit as st
 
+from state_manager import reset_state
+
 def logout_callback():
-    st.session_state.user.is_logged_in = None
+    reset_state()
+    # st.session_state.user.is_logged_in = None
+    # st.switch_page("pages/login")
 
 
 def ui_account_page():

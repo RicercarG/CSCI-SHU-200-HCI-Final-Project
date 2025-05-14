@@ -17,6 +17,14 @@ def init_state():
     if "page_to_switch" not in st.session_state:
         st.session_state.page_to_switch = None
 
+def reset_state():
+    st.session_state.user.is_logged_in = False
+    st.session_state.user = User()
+    st.session_state.current_car = Car()
+    st.session_state.operation = None
+    st.session_state.history = None
+    st.session_state.page_to_switch = None
+
 class User():
     def __init__(self):
         self.is_logged_in = False

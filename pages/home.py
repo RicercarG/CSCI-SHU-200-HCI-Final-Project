@@ -1,3 +1,4 @@
+import os
 import random
 import time
 from functools import partial
@@ -44,27 +45,6 @@ def ui_landing_page():
 
     title_placeholder.title(st.session_state.current_car.car_model)
 
-
-    with st.container(border=True, key="car_switch_container"):
-
-        st.progress(st.session_state.current_car.battery_level / 100, text=f"Battery Level: {st.session_state.current_car.battery_level}%")
-
-        if st.session_state.current_car.battery_level > 80:
-            text = "This car is full of juice. Have fun driving!"
-        elif 80 > st.session_state.current_car.battery_level >= 30:
-            text = "This car is half full. Watchout for the range!"
-        else:
-            text = "This car is low on juice. Please charge it before driving."
-        func = partial(stream_text, text=text)
-        st.write_stream(func)
-    
-    ########## UI for logging rides ##########
-    with st.container(border=True):
-        ride_logger()
-    
-
-    ########## UI for ride history ##########
-    st.write("Ride History")
     ride_history_df = conn.query(
         f"""
         SELECT * FROM user_car_history_table 
@@ -73,6 +53,42 @@ def ui_landing_page():
         """,
         ttl=0,
     )
+
+    with st.container(border=True, key="car_switch_container"):
+
+        prediction = model_inference(ride_history_df[ride_history_df["user_car_id"] == user_car_id])
+
+        st.progress(st.session_state.current_car.battery_level / 100, text=f"Battery Level: {st.session_state.current_car.battery_level}%")
+
+        if prediction:
+            if st.session_state.current_car.battery_level > 50:
+                text = "The car is full of juice. However, we highly "
+            else:
+                text = "We "
+
+            text += "recommend you charge this car before driving. "
+        else:
+            text = "No need to charge this car. Have fun driving! "
+
+        # if st.session_state.current_car.battery_level > 80:
+        #     text = "This car is full of juice. "
+        # elif 80 > st.session_state.current_car.battery_level >= 30:
+        #     text = "This car is half full. "
+        # else:
+        #     text = "This car is low on juice. Please charge it before driving."
+        func = partial(stream_text, text=text)
+        st.write_stream(func)
+    
+
+    
+    ########## UI for logging rides ##########
+    with st.container(border=True):
+        ride_logger()
+    
+
+    ########## UI for ride history ##########
+    st.write("Ride History")
+
     history_selection = st.dataframe(
         ride_history_df, 
         hide_index=True,
@@ -231,7 +247,27 @@ def ride_logger():
         with col_right:
             st.button("Begin Charging", use_container_width=True, on_click=start_operation_callback, args=("Charge", ), type="secondary")
 
-        
+
+def model_inference(car_df):
+
+    print(car_df)
+    # save the df to cache
+    csv_save_path = "cached_table/car_data.csv"
+    car_df.to_csv(csv_save_path, index=False)
+
+    checkpoint_path = "best_model.pt"
+
+    os.system(
+        f"python3 ev_charging_predictor/main.py --mode predict --model_dir {checkpoint_path} --data_dir {csv_save_path}"
+    )
+
+    results = pd.read_csv("models/predictions.csv")
+    # print(results)
+    prediction = results["predicted_should_charge"].iloc[0]
+    # print(prediction)
+    # return prediction
+    return prediction == 1
+
 
 if __name__ == "__main__":
     conn = st.connection("mysql", type="sql", ttl=0)

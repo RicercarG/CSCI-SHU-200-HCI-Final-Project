@@ -4,12 +4,38 @@
 
 This is a simple demo for an app to release mileage anxiety for EV users.
 
-### Problem to solve
+### Problem to Solve
 
-### Core Functionality
+How to release mileage anxiety for EV users, with minimal user effort?
 
-### Cost and Scalability Estimation
+### Our Solution
 
+We propose a simple app that learns vehicle-level battery consumption pattern, and send reminders to users for recharging.
+
+#### Target Users
+People with electric vehicles, especially those who have multiple EVs.
+
+#### How it Works
+The logic is similar to an accounting software:
+
+1. During each ride/charge, the app records the parameters like weather, location and battery level at the beginning and end of each ride/charge (and charing costs).
+
+2. Our model learns the battery consumption pattern for each vehicle, and predicts when that vehicle will need to be recharged. (Check out our [EV Charging Predictor](https://github.com/RicercarG/CSCI-SHU-200-HCI-Final-Project/blob/main/ev_charging_predictor/README.md) for more details)
+
+3. The app will visualize the data for each user, including the battery consumption pattern for each vehicle, the charging costs, and the frequently visited chargning locations.
+
+To log each ride/charge, except for logging all data manually, we envision that we can utilize the bluetooth connection between the EV and phone. The logging will be automatically triggered when the phone is connected/disconnected to the EV.
+
+### Business Model
+
+#### Costs and scalability
+- A data storage service is needed to store the data. We can use AWS RDS or Google Cloud SQL, which are both scalable and cost-effective.
+
+- The online learning algorithm could be done locally on the phone. Thus the user scale is not a concern.
+
+#### Revenue Streams
+- We plan to release the app for free.
+- We can sell the data to EV manufacturers and charging station operators. The data can be used to optimize the battery consumption pattern for each vehicle, and predict when that vehicle will need to be recharged. The data can also be used to optimize the charging station locations and schedules.
 
 
 ## Quick Start
@@ -66,10 +92,10 @@ streamlit run app.py
 
 ### UI
 - [x] Login Logic
-- [ ] Nearby maps
+- [x] Nearby maps
 - [x] Data Analysis Page
 
 
 ### ML Model
 
-- [ ] Train a model to predict the user's next event type (charging or driving), and the battery level after the event.
+- [x] Train a model to predict the user's next event type (charging or driving), and the battery level after the event.
