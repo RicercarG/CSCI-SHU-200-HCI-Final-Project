@@ -1,6 +1,7 @@
 import streamlit as st
 
 def init_state():
+    # to manage the values of the session state
     if "user" not in st.session_state:
         st.session_state.user = User()
 
@@ -12,9 +13,6 @@ def init_state():
 
     if "history" not in st.session_state:
         st.session_state.history = None
-
-    # if "current_page" not in st.session_state:
-    #     st.session_state.current_page = "login"
 
     if "page_to_switch" not in st.session_state:
         st.session_state.page_to_switch = None

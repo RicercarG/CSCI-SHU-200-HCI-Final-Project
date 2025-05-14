@@ -19,22 +19,24 @@ WEATHER_CONDITIONS = ["Sunny", "Cloudy", "Rainy", "Snowy", "Windy", "Foggy", "St
 
 
 def ui_landing_page():
+    """
+    The main landing page of the app.
+    """
 
     title_placeholder = st.empty()
-    # car switch
+
+    ########## car switch ##########
     cars_df = conn.query(
         f"SELECT * FROM user_car_table WHERE user_id = {st.session_state.user.id}",
         ttl=0,
     )
 
     car_options = [
-        # f"{row['car_model']} - {row['user_car_id']}"
         row["user_car_id"]
         for _, row in cars_df.iterrows()
     ]
 
     user_car_id = st.segmented_control("Car ID", options=car_options, selection_mode="single", default=car_options[0], label_visibility="collapsed")
-    # user_car_id = int(selected.split(" - ")[1])
     car_row = cars_df[cars_df["user_car_id"] == user_car_id].iloc[0]
     st.session_state.current_car.user_car_id = car_row["user_car_id"]
     st.session_state.current_car.car_model = car_row["car_model"]
@@ -55,17 +57,13 @@ def ui_landing_page():
             text = "This car is low on juice. Please charge it before driving."
         func = partial(stream_text, text=text)
         st.write_stream(func)
-
-    # with st.container(border=False):
-    #     if st.button("Nearby Charging Locations", use_container_width=True):
-    #         st.switch_page("pages/map.py")
     
-    # button for logging each ride
+    ########## UI for logging rides ##########
     with st.container(border=True):
         ride_logger()
     
 
-    # show a table
+    ########## UI for ride history ##########
     st.write("Ride History")
     ride_history_df = conn.query(
         f"""
@@ -80,23 +78,28 @@ def ui_landing_page():
         hide_index=True,
         selection_mode="single-row",
         column_order=["type", "start_date", "start_time", "end_date", "end_time", "weather", "paid", "end_battery_level"],
-        # on_select=stop_ride_callback,
         )
-    
-    st.write(history_selection)
+
 
 def stream_text(text):
+    """
+    Used with st.write_stream() to display text in a streaming manner
+    """
+
     for char in text:
         yield char
         time.sleep(0.01)
 
 
 def get_location_coordinates():
-    # random generater latitude and longitude
+    """
+    Randomly generate latitude and longitude coordinates for DEMO usage
+    """
     latitude = random.uniform(30.70, 31.53)
     longitude = random.uniform(120.85, 122.12)
 
     return (latitude, longitude)
+
 
 def get_battery_level(user_car_id):
     # get the latest battery level from the database
@@ -113,8 +116,12 @@ def get_battery_level(user_car_id):
     return history_df.iloc[0]["end_battery_level"]
 
 
-
 def form_params_template(operation):
+    """
+    A uniform component for the ride/charge forms
+    :param operation: "Ride" or "Charge" or "Change"
+    """
+
     assert operation in ["Ride", "Charge", "Change"]
 
     form_params = {}
@@ -156,6 +163,9 @@ def form_params_template(operation):
 
 
 def commit_data_callback(form_params):
+    """
+    Sends the form data to the database.
+    """
     with conn.session as session:
         raw_columns = form_params.keys()
 
@@ -168,7 +178,6 @@ def commit_data_callback(form_params):
 
 
 def start_operation_callback(operation):
-    # st.session_state.operation_started = True
     st.session_state.operation = operation
     st.session_state.operation_start_date = datetime.now().date()
     st.session_state.operation_start_time = datetime.now().time()
@@ -204,6 +213,9 @@ def stop_charge_callback():
         st.rerun()
 
 def ride_logger():
+    """
+    The actual UI for logging a ride/charge.
+    """
     if st.session_state.operation == "Ride":
         st.warning("Ride in progress", width="stretch")
         st.button("Stop", use_container_width=True, on_click=stop_ride_callback)

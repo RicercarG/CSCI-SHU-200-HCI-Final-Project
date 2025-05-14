@@ -1,7 +1,10 @@
 import streamlit as st
 
 def ui_analysis_page():
-    # Add your analysis page content here
+    """
+    Visualize the data insights.
+    """
+    
     st.title("Data Insights")
 
     history_df = conn.query(
@@ -42,15 +45,6 @@ def vis_paid(df):
 
 def vis_driving_habits(df):
     st.write("Battery Usage Habits")
-    # create a new df column of the combination of car_model and user_car_id
-    
-
-    # st.line_chart(
-    #     df,
-    #     x="end_date",
-    #     y="end_battery_level",
-    #     color="car_model_with_id"
-    # )
 
     st.bar_chart(
         df,
@@ -66,7 +60,6 @@ def vis_charging_loc(df):
         df[df["type"]=="charge"],
         latitude="start_location_latitude",
         longitude="start_location_longitude",
-        # color="car_model_with_id",
         # size=10,
         # zoom="auto",
     )

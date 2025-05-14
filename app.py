@@ -9,7 +9,6 @@ def on_change(key):
 
 
 def switch_page(selection):
-# def on_change(key):
     st.session_state.page_to_switch = None
 
     if selection == "Home":

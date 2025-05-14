@@ -1,6 +1,38 @@
 # CSCI-SHU-200-HCI-Final-Project
 
-## Start the app
+## Project Description
+
+This is a simple demo for an app to release mileage anxiety for EV users.
+
+### Problem to solve
+
+### Core Functionality
+
+### Cost and Scalability Estimation
+
+
+
+## Quick Start
+
+### Step1: Install python packages (we tested on python 3.10)
+```
+pip install -r requirements.txt
+```
+
+### Step2: Setup the database
+Create an mysql database, and run `create_tables.sql` to create tables
+
+### Step3: Populate Data
+```
+python database/populate_data.py
+```
+A browser page should be opened. If not please try Local URL: 
+`http://localhost:8501`
+
+To login, please select an existing user from the database `user_table`.
+
+
+### Step4: Start the app
 ```
 streamlit run app.py
 ```
@@ -10,15 +42,15 @@ streamlit run app.py
 
 ### Database
 
-- [ ] User Table
+- [x] User Table
     - **username**
     - password
 
-- [ ] User-Car Table
+- [x] User-Car Table
     - **username**
     - **car model**
 
-- [ ] User-Car-History Table
+- [x] User-Car-History Table
     - **username**
     - **car model**
     - type: ["ride", "charge"]
@@ -32,12 +64,10 @@ streamlit run app.py
     - paid: for charging, how much did the user pay?
     - end batterylevel
 
-    .... (more to come)
-
 ### UI
-- [ ] Login Logic
+- [x] Login Logic
 - [ ] Nearby maps
-- [ ] Data Analysis Page
+- [x] Data Analysis Page
 
 
 ### ML Model
