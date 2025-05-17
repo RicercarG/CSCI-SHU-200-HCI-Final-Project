@@ -149,44 +149,62 @@ def predict(args):
     # Make predictions
     predictions, probabilities = trainer.predict(test_loader)
     
-    # Get the test data used for predictions
-    # Instead of randomly sampling, extract the actual test data
-    test_data = data_loader.data[data_loader.data['user_car_id'].isin(
-        test_loader.dataset.processed_data['user_car_id'].unique()
-    )]
+    # Extract users and their latest trip data from the processed data
+    unique_users = test_loader.dataset.processed_data['user_car_id'].unique()
+    latest_trips = []
     
-    # Match the length of test data with predictions
-    # We need to ensure we're using the same indices that were used for predictions
-    seq_indices = []
-    for user_id, user_data in test_loader.dataset.processed_data.groupby('user_car_id'):
-        user_data = user_data.sort_values('start_datetime')
-        for i in range(len(user_data) - test_loader.dataset.sequence_length):
-            seq_indices.append(user_data.index[i + test_loader.dataset.sequence_length])
+    for user_id in unique_users:
+        user_data = test_loader.dataset.processed_data[test_loader.dataset.processed_data['user_car_id'] == user_id]
+        if len(user_data) > 0:
+            # Get the most recent trip
+            latest_trip = user_data.sort_values('start_datetime').iloc[-1]
+            latest_trips.append(latest_trip)
     
-    # Use the sequence indices to get the corresponding rows
-    result_data = test_loader.dataset.processed_data.loc[seq_indices].reset_index(drop=True)
-    
-    # Ensure arrays are of the same length
-    if len(result_data) != len(predictions):
-        print(f"Warning: Data length mismatch! Results data: {len(result_data)}, Predictions: {len(predictions)}")
-        # Use the minimum length to avoid errors
-        min_len = min(len(result_data), len(predictions), len(probabilities))
-        result_data = result_data.iloc[:min_len]
-        predictions = predictions[:min_len]
-        probabilities = probabilities[:min_len]
-    
-    # Create a DataFrame with results
-    results = pd.DataFrame({
-        'user_car_id': result_data['user_car_id'].values,
-        'original_type': result_data['type'].values,
-        'predicted_should_charge': predictions,
-        'charging_probability': probabilities
-    })
-    
-    # Save results
-    results_path = os.path.join(args.model_dir, 'predictions.csv')
-    results.to_csv(results_path, index=False)
-    print(f"Predictions saved to {results_path}")
+    # Create results dataframe
+    if len(latest_trips) == len(predictions):
+        results = pd.DataFrame(latest_trips)
+        results['predicted_should_charge'] = predictions
+        results['charging_probability'] = probabilities
+        
+        # Select columns for output
+        output_columns = ['user_car_id', 'start_datetime', 'end_battery_level', 
+                         'type', 'predicted_should_charge', 'charging_probability']
+        results = results[output_columns]
+        
+        # Add a recommendation column
+        results['recommendation'] = results['predicted_should_charge'].apply(
+            lambda x: "CHARGE" if x == 1 else "DO NOT CHARGE"
+        )
+        
+        # Format probabilities as percentages
+        results['confidence'] = (results['charging_probability'] * 100).round(1).astype(str) + '%'
+        
+        # Save results
+        results_path = os.path.join(args.model_dir, 'predictions.csv')
+        results.to_csv(results_path, index=False)
+        print(f"Predictions saved to {results_path}")
+        
+        # Print summary
+        print("\nPrediction Summary:")
+        print(f"Total users: {len(results)}")
+        print(f"Users recommended to charge: {results['predicted_should_charge'].sum()}")
+        print(f"Average charging probability: {results['charging_probability'].mean():.2f}")
+        
+        # Display compact version of results
+        compact_results = results[['user_car_id', 'end_battery_level', 'recommendation', 'confidence']]
+        print("\nUser Recommendations:")
+        print(compact_results.head(10).to_string(index=False))
+        if len(compact_results) > 10:
+            print(f"... and {len(compact_results) - 10} more users")
+    else:
+        print(f"Error: Mismatch between number of latest trips ({len(latest_trips)}) and predictions ({len(predictions)})")
+        results = pd.DataFrame({
+            'predictions': predictions,
+            'probabilities': probabilities
+        })
+        results_path = os.path.join(args.model_dir, 'predictions_raw.csv')
+        results.to_csv(results_path, index=False)
+        print(f"Raw predictions saved to {results_path}")
     
     return results
 

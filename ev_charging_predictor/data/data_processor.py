@@ -428,11 +428,24 @@ class EVTripDataset(Dataset):
                 # Get targets
                 targets = user_data[TARGET].values
                 
-                # Create sequences
-                for i in range(len(user_data) - self.sequence_length):
-                    seq_features = features[i:i + self.sequence_length]
-                    seq_target = targets[i + self.sequence_length]
+                if self.training:
+                    # For training, use sliding window to create multiple sequences per user
+                    for i in range(len(user_data) - self.sequence_length):
+                        seq_features = features[i:i + self.sequence_length]
+                        seq_target = targets[i + self.sequence_length]
+                        sequences.append((seq_features, seq_target))
+                else:
+                    # For prediction/evaluation, only use the most recent data
+                    # Get the last sequence_length records for the feature window
+                    recent_indices = user_data.index[-self.sequence_length-1:-1]
+                    seq_features = features[-self.sequence_length:]
+                    
+                    # The target is the last record
+                    seq_target = targets[-1]
+                    
+                    # Add only this one sequence for prediction
                     sequences.append((seq_features, seq_target))
+                    
             except Exception as e:
                 print(f"Error processing data for user {user_id}: {str(e)}")
                 continue
@@ -441,7 +454,7 @@ class EVTripDataset(Dataset):
         if not sequences:
             print(f"Warning: No sequences could be created! Check your data and sequence length ({self.sequence_length}).")
         else:
-            print(f"Created {len(sequences)} sequences for training/prediction.")
+            print(f"Created {len(sequences)} sequences for {'training' if self.training else 'prediction/evaluation'}.")
             
         return sequences
     
@@ -450,5 +463,9 @@ class EVTripDataset(Dataset):
     
     def __getitem__(self, idx):
         features, target = self.sequences[idx]
-        features = features.toarray() 
+        
+        # Convert to dense array if features is a sparse matrix
+        if hasattr(features, 'toarray'):
+            features = features.toarray()
+            
         return torch.tensor(features, dtype=torch.float32), torch.tensor(target, dtype=torch.float32) 

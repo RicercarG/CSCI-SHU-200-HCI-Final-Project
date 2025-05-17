@@ -79,16 +79,23 @@ class EVDataLoader:
             print(f"Test data: {len(test_data)} records from {len(users_test)} users")
             
             # Create datasets
+            print(f"Creating datasets with sequence length {sequence_length}...")
             train_dataset = EVTripDataset(train_data, self.processor, sequence_length, training=True)
             val_dataset = EVTripDataset(val_data, self.processor, sequence_length, training=False)
             test_dataset = EVTripDataset(test_data, self.processor, sequence_length, training=False)
+            
+            print(f"Created {len(train_dataset)} training sequences")
+            print(f"Created {len(val_dataset)} validation sequences")
+            print(f"Created {len(test_dataset)} test sequences (one per user)")
         
         else:
-            # users_train, users_val = None, None
-            # users_test = unique_users
+            print(f"Not enough unique users for splitting. Using all data for testing.")
+            print(f"Total data: {len(self.data)} records from {len(unique_users)} users")
+            
             train_dataset = None
             val_dataset = None
             test_dataset = EVTripDataset(self.data, self.processor, sequence_length, training=False)
+            print(f"Created {len(test_dataset)} test sequences (one per user)")
 
         return train_dataset, val_dataset, test_dataset
     
