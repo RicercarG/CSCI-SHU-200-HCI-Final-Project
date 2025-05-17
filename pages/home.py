@@ -253,7 +253,7 @@ def stop_ride_callback():
 @st.dialog("Log the charge")
 def stop_charge_callback():
     st.session_state.operation = None
-    
+
     overwrite = False
     register_session_state("operation_end_date", datetime.now().date(), overwrite=overwrite)
     register_session_state("operation_end_time", datetime.now().time(), overwrite=overwrite)
@@ -288,7 +288,7 @@ def model_inference(car_df):
     checkpoint_path = "best_model.pt"
 
     os.system(
-        f"python3 ev_charging_predictor/main.py --mode predict --model_dir {checkpoint_path} --data_dir {csv_save_path}"
+        f"python -m ev_charging_predictor.main --mode predict --model_path {checkpoint_path} --data {csv_save_path}"
     )
 
     results = pd.read_csv("models/predictions.csv")

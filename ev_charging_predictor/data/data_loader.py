@@ -54,34 +54,42 @@ class EVDataLoader:
         # Split users rather than individual trips to avoid data leakage
         unique_users = self.data['user_car_id'].unique()
         
-        # First split: separate test set
-        users_train_val, users_test = train_test_split(
-            unique_users, 
-            test_size=test_split, 
-            random_state=random_state
-        )
+        if len(unique_users) > 2:
+            # First split: separate test set
+            users_train_val, users_test = train_test_split(
+                unique_users, 
+                test_size=test_split, 
+                random_state=random_state
+            )
+            
+            # Second split: separate validation set from training set
+            users_train, users_val = train_test_split(
+                users_train_val,
+                test_size=val_split / (1 - test_split),
+                random_state=random_state
+            )
         
-        # Second split: separate validation set from training set
-        users_train, users_val = train_test_split(
-            users_train_val,
-            test_size=val_split / (1 - test_split),
-            random_state=random_state
-        )
+            # Filter data by user
+            train_data = self.data[self.data['user_car_id'].isin(users_train)]
+            val_data = self.data[self.data['user_car_id'].isin(users_val)]
+            test_data = self.data[self.data['user_car_id'].isin(users_test)]
+            
+            print(f"Train data: {len(train_data)} records from {len(users_train)} users")
+            print(f"Validation data: {len(val_data)} records from {len(users_val)} users")
+            print(f"Test data: {len(test_data)} records from {len(users_test)} users")
+            
+            # Create datasets
+            train_dataset = EVTripDataset(train_data, self.processor, sequence_length, training=True)
+            val_dataset = EVTripDataset(val_data, self.processor, sequence_length, training=False)
+            test_dataset = EVTripDataset(test_data, self.processor, sequence_length, training=False)
         
-        # Filter data by user
-        train_data = self.data[self.data['user_car_id'].isin(users_train)]
-        val_data = self.data[self.data['user_car_id'].isin(users_val)]
-        test_data = self.data[self.data['user_car_id'].isin(users_test)]
-        
-        print(f"Train data: {len(train_data)} records from {len(users_train)} users")
-        print(f"Validation data: {len(val_data)} records from {len(users_val)} users")
-        print(f"Test data: {len(test_data)} records from {len(users_test)} users")
-        
-        # Create datasets
-        train_dataset = EVTripDataset(train_data, self.processor, sequence_length, training=True)
-        val_dataset = EVTripDataset(val_data, self.processor, sequence_length, training=False)
-        test_dataset = EVTripDataset(test_data, self.processor, sequence_length, training=False)
-        
+        else:
+            # users_train, users_val = None, None
+            # users_test = unique_users
+            train_dataset = None
+            val_dataset = None
+            test_dataset = EVTripDataset(self.data, self.processor, sequence_length, training=False)
+
         return train_dataset, val_dataset, test_dataset
     
     def get_dataloaders(self, batch_size=BATCH_SIZE):
@@ -96,21 +104,27 @@ class EVDataLoader:
         """
         train_dataset, val_dataset, test_dataset = self.prepare_datasets()
         
-        train_loader = DataLoader(
-            train_dataset,
-            batch_size=batch_size,
-            shuffle=True,
-            num_workers=2,
-            pin_memory=True
-        )
+        if train_dataset is not None:
+            train_loader = DataLoader(
+                train_dataset,
+                batch_size=batch_size,
+                shuffle=True,
+                num_workers=2,
+                pin_memory=True
+            )
+        else:
+            train_loader = None
         
-        val_loader = DataLoader(
-            val_dataset,
-            batch_size=batch_size,
-            shuffle=False,
-            num_workers=2,
-            pin_memory=True
-        )
+        if val_dataset is not None:
+            val_loader = DataLoader(
+                val_dataset,
+                batch_size=batch_size,
+                shuffle=False,
+                num_workers=2,
+                pin_memory=True
+            )
+        else:
+            val_loader = None
         
         test_loader = DataLoader(
             test_dataset,

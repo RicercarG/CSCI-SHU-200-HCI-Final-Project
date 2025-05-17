@@ -116,13 +116,22 @@ class EVDataProcessor:
         # If the type is 'charge', the target is 1, otherwise 0
         processed_data['should_charge'] = (processed_data['type'] == 'charge').astype(int)
         
+        def battery_drain_per_km(row):
+            if row['type'] == 'charge' and row['trip_distance_km'] > 0:
+                return (row['end_battery_level'] - 100) / row['trip_distance_km']
+            elif row['trip_distance_km'] > 0:
+                return row['end_battery_level'] / row['trip_distance_km']
+            else:
+                return 0
+
         # Calculate battery drain rate where applicable
-        processed_data['battery_drain_per_km'] = processed_data.apply(
-            lambda row: ((row['end_battery_level'] - 100) / row['trip_distance_km'] 
-                        if row['type'] == 'charge' else 
-                        row['end_battery_level'] / row['trip_distance_km']), 
-            axis=1
-        )
+        # processed_data['battery_drain_per_km'] = processed_data.apply(
+        #     lambda row: ((row['end_battery_level'] - 100) / row['trip_distance_km'] 
+        #                 if row['type'] == 'charge' and row['trip_distance_km'] > 0 else row['end_battery_level'] / row['trip_distance_km']), 
+        #     axis=1
+        # )
+
+        processed_data['battery_drain_per_km'] = processed_data.apply(battery_drain_per_km, axis=1)
         
         # Add user history features (rolling window statistics)
         processed_data = self._add_history_features(processed_data)
@@ -131,6 +140,7 @@ class EVDataProcessor:
         processed_data = self._extract_user_features(processed_data)
         
         return processed_data
+
     
     def _calculate_distance(self, lat1, lon1, lat2, lon2):
         """
@@ -277,7 +287,10 @@ class EVDataProcessor:
                 print(f"Error in count_charges_last_30d: {str(e)}")
                 return pd.Series(0, index=original_indices, dtype='float64')
 
-        data['charge_count_30d'] = data.groupby('user_car_id', group_keys=False).apply(count_charges_last_30d)
+        # data['charge_count_30d'] = data.groupby('user_car_id', group_keys=False).apply(count_charges_last_30d)
+        data['charge_count_30d'] = data.groupby('user_car_id')['start_datetime'].transform(
+            lambda x: count_charges_last_30d(data.loc[x.index])
+        )
         data['charge_count_30d'].fillna(0, inplace=True)
 
         return data
