@@ -81,8 +81,8 @@ def plot_roc_curve(y_true, y_proba, save_path=None):
     if save_path:
         plt.savefig(save_path)
         print(f"ROC curve saved to {save_path}")
-    
-    plt.show()
+    else:
+        plt.show()
 
 
 def plot_precision_recall_curve(y_true, y_proba, save_path=None):
@@ -107,8 +107,8 @@ def plot_precision_recall_curve(y_true, y_proba, save_path=None):
     if save_path:
         plt.savefig(save_path)
         print(f"Precision-Recall curve saved to {save_path}")
-    
-    plt.show()
+    else:
+        plt.show()
 
 
 def plot_confusion_matrix(y_true, y_pred, save_path=None):
@@ -133,8 +133,8 @@ def plot_confusion_matrix(y_true, y_pred, save_path=None):
     if save_path:
         plt.savefig(save_path)
         print(f"Confusion matrix saved to {save_path}")
-    
-    plt.show()
+    else:
+        plt.show()
 
 
 def plot_feature_importance(feature_names, importances, top_n=20, save_path=None):
@@ -166,8 +166,8 @@ def plot_feature_importance(feature_names, importances, top_n=20, save_path=None
     if save_path:
         plt.savefig(save_path)
         print(f"Feature importance plot saved to {save_path}")
-    
-    plt.show()
+    else:
+        plt.show()
 
 
 def evaluate_and_visualize(model, test_loader, feature_names=None, save_dir=None):

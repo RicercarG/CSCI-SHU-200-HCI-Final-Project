@@ -32,7 +32,7 @@ ev_charging_predictor/
 ├── main.py                  # Entry point script
 └── README.md                # This file
 ```
-
+<!-- 
 ## Installation
 
 1. Clone the repository:
@@ -44,20 +44,20 @@ cd ev-charging-predictor
 2. Install dependencies:
 ```bash
 pip install -r requirements.txt
-```
+``` -->
 
 ## Usage
 
 ### Training a New Model
 
 ```bash
-python -m ev_charging_predictor.main --mode train --data path/to/data.csv --model_path models/ --epochs 20
+python -m ev_charging_predictor.main --mode train --data cached_table/user_car_history_table.csv --model_path models/ --epochs 20
 ```
 
 ### Making Predictions
 
 ```bash
-python -m ev_charging_predictor.main --mode predict --data path/to/data.csv --model_path models/ev_charging_model.pt
+python -m ev_charging_predictor.main --mode predict --data cached_table/user_car_history_table.csv --model_path models/ev_charging_model.pt
 ```
 
 ### Online Learning with New Data

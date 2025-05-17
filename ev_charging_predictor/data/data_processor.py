@@ -437,4 +437,5 @@ class EVTripDataset(Dataset):
     
     def __getitem__(self, idx):
         features, target = self.sequences[idx]
+        features = features.toarray() 
         return torch.tensor(features, dtype=torch.float32), torch.tensor(target, dtype=torch.float32) 

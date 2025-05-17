@@ -49,19 +49,26 @@ pip install -r requirements.txt
 Create an mysql database, and run `create_tables.sql` to create tables
 
 ### Step3: Populate Data
+To ensure proper data instertion, first set the MySQL max_allowed_packet to be 256M
+``````
+SET GLOBAL max_allowed_packet = 268435456;
+```
+
+After that, we can safely populate data
 ```
 python database/populate_data.py
 ```
-A browser page should be opened. If not please try Local URL: 
-`http://localhost:8501`
-
-To login, please select an existing user from the database `user_table`.
 
 
 ### Step4: Start the app
 ```
 streamlit run app.py
 ```
+
+A browser page should be opened. If not please try Local URL: 
+`http://localhost:8501`
+
+To login, please select an existing user from the database `user_table`.
 
 
 ## TODOs

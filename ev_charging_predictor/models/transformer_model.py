@@ -554,4 +554,4 @@ class TransformerChargingPredictor(BaseModel):
             plt.savefig(save_path)
             print(f"Training history plot saved to {save_path}")
         
-        plt.show() 
+        # plt.show() 

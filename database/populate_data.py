@@ -7,6 +7,7 @@ import decimal
 from faker import Faker
 import hashlib
 import pandas as pd
+import python_weather
 
 # Initialize Faker for generating mock data
 fake = Faker()
@@ -31,7 +32,8 @@ CAR_MODELS = [
     "Ford Mustang Mach-E", "Polestar 2", "Rivian R1T", "Lucid Air"
 ]
 
-WEATHER_CONDITIONS = ["Sunny", "Cloudy", "Rainy", "Snowy", "Windy", "Foggy", "Stormy"]
+# WEATHER_CONDITIONS = ["Sunny", "Cloudy", "Rainy", "Snowy", "Windy", "Foggy", "Stormy"]
+WEATHER_CONDITIONS = [str(k) for k in python_weather.enums.Kind]
 
 # NYC bounding box (approximate)
 MIN_LAT, MAX_LAT = 30.70, 31.53
@@ -240,7 +242,7 @@ def main(
 
 if __name__ == "__main__":
     main(
-        gen_data=False,
+        gen_data=True,
         export_data=True
     )
 

@@ -1,9 +1,13 @@
 import os
+import asyncio
 import random
 import time
+import urllib.request
+import json
 from functools import partial
 from datetime import datetime
 
+import python_weather
 import streamlit as st
 import pandas as pd
 from streamlit_option_menu import option_menu
@@ -16,7 +20,7 @@ CAR_MODELS = [
     "Ford Mustang Mach-E", "Polestar 2", "Rivian R1T", "Lucid Air"
 ]
 
-WEATHER_CONDITIONS = ["Sunny", "Cloudy", "Rainy", "Snowy", "Windy", "Foggy", "Stormy"]
+# WEATHER_CONDITIONS = ["Sunny", "Cloudy", "Rainy", "Snowy", "Windy", "Foggy", "Stormy"]
 
 
 def ui_landing_page():
@@ -61,14 +65,17 @@ def ui_landing_page():
         st.progress(st.session_state.current_car.battery_level / 100, text=f"Battery Level: {st.session_state.current_car.battery_level}%")
 
         if prediction:
-            if st.session_state.current_car.battery_level > 50:
-                text = "The car is full of juice. However, we highly "
-            else:
-                text = "We "
+            st.warning("Based on your usage pattern, we recommend you charge this car before driving. ")
 
-            text += "recommend you charge this car before driving. "
-        else:
-            text = "No need to charge this car. Have fun driving! "
+        # if prediction:
+        #     if st.session_state.current_car.battery_level > 50:
+        #         text = "The car is full of juice. However, we highly "
+        #     else:
+        #         text = "We "
+
+        #     text += "recommend you charge this car before driving. "
+        # else:
+        #     text = "No need to charge this car. Have fun driving! "
 
         # if st.session_state.current_car.battery_level > 80:
         #     text = "This car is full of juice. "
@@ -76,8 +83,8 @@ def ui_landing_page():
         #     text = "This car is half full. "
         # else:
         #     text = "This car is low on juice. Please charge it before driving."
-        func = partial(stream_text, text=text)
-        st.write_stream(func)
+        # func = partial(stream_text, text=text)
+        # st.write_stream(func)
     
 
     
@@ -108,13 +115,23 @@ def stream_text(text):
 
 
 def get_location_coordinates():
-    """
-    Randomly generate latitude and longitude coordinates for DEMO usage
-    """
-    latitude = random.uniform(30.70, 31.53)
-    longitude = random.uniform(120.85, 122.12)
+    # """
+    # Randomly generate latitude and longitude coordinates for DEMO usage
+    # """
+    # latitude = random.uniform(30.70, 31.53)
+    # longitude = random.uniform(120.85, 122.12)
 
-    return (latitude, longitude)
+    url = "https://ipapi.co/json/"  # Free IP geolocation API
+    with urllib.request.urlopen(url) as response:
+        data = json.loads(response.read())
+    
+    return data
+
+async def get_weather(city):
+    async with python_weather.Client(unit=python_weather.IMPERIAL) as client:
+    # fetch a weather forecast from a city
+        weather = await client.get(city)
+    return weather.kind
 
 
 def get_battery_level(user_car_id):
@@ -163,17 +180,20 @@ def form_params_template(operation):
     with st.expander(label="Configure End Time & Location"):
         form_params["end_date"] = st.date_input("End Date", value=st.session_state.operation_end_date)
         form_params["end_time"] = st.time_input("End Time", value=st.session_state.operation_end_time)
-        form_params["end_location_latitude"] = st.text_input("Start Location", value=st.session_state.operation_end_location[0])
-        form_params["end_location_longitude"] = st.text_input("Start Location", value=st.session_state.operation_end_location[1])
+        form_params["end_location_latitude"] = st.text_input("End Location", value=st.session_state.operation_end_location[0])
+        form_params["end_location_longitude"] = st.text_input("End Location", value=st.session_state.operation_end_location[1])
     
-    form_params["weather"] = st.selectbox("Weather", WEATHER_CONDITIONS)
+    weather = st.session_state.weather
+    weather_options = [str(k) for k in python_weather.enums.Kind]
+    form_params["weather"] = st.selectbox("Weather (Auto Fetched)", weather_options, index=weather_options.index(weather))
 
     if operation == "Ride":
         form_params["paid"] = None
     else:
         form_params["paid"] = st.number_input("Paid", value=0)
 
-    form_params["end_battery_level"] = st.number_input("End Battery Level", min_value=0, max_value=100)
+    end_battery_level = st.session_state.end_battery_level
+    form_params["end_battery_level"] = st.number_input("End Battery Level (Auto Fetched From Car)", min_value=0, max_value=100, value=end_battery_level)
 
     return form_params
 
@@ -194,33 +214,84 @@ def commit_data_callback(form_params):
 
 
 def start_operation_callback(operation):
+    # first try to clearup the session state
+    remove_session_state("operation_end_date")
+    remove_session_state("operation_end_time")
+    remove_session_state("operation_end_city")
+    remove_session_state("operation_end_location")
+    remove_session_state("end_battery_level")
+    remove_session_state("weather")
+
     st.session_state.operation = operation
     st.session_state.operation_start_date = datetime.now().date()
     st.session_state.operation_start_time = datetime.now().time()
-    st.session_state.operation_start_location = get_location_coordinates()
+    
+    location_data = get_location_coordinates()
+    st.session_state.operation_start_city = location_data.get("city")
+    st.session_state.operation_start_location = (location_data.get("latitude"), location_data.get("longitude"))
+
+def register_session_state(key, value, overwrite=False):
+    if overwrite or key not in st.session_state:
+        st.session_state[key] = value
+
+def remove_session_state(key):
+    if key in st.session_state.keys():
+        del st.session_state[key]
 
 
 @st.dialog("Log the ride")
 def stop_ride_callback():
     st.session_state.operation = None
-    st.session_state.operation_end_date = datetime.now().date()
-    st.session_state.operation_end_time = datetime.now().time()
-    st.session_state.operation_end_location = get_location_coordinates()
-    st.success("Ride stopped")
 
+    overwrite = False
+    register_session_state("operation_end_date", datetime.now().date(), overwrite=overwrite)
+    register_session_state("operation_end_time", datetime.now().time(), overwrite=overwrite)
+
+    location_data = get_location_coordinates()
+    register_session_state("operation_end_city", location_data.get("city"), overwrite=overwrite)
+    register_session_state("operation_end_location", (location_data.get("latitude"), location_data.get("longitude")), overwrite=overwrite)
+    
+    register_session_state("end_battery_level", random.randint(10, 90), overwrite=overwrite)
+
+    if overwrite or "weather" not in st.session_state:
+        with st.spinner("Fetching Data"):
+            st.session_state.weather = str(asyncio.run(get_weather(st.session_state.operation_end_city)))
+
+    st.success("Ride stopped")
     form_params = form_params_template(operation="Ride")
 
-    if st.button("Log this ride!", type="primary", use_container_width=True):
+    if st.button(
+        "Log this ride!", 
+        type="primary", 
+        use_container_width=True,
+    ):
         commit_data_callback(form_params=form_params)
         st.rerun()
+
 
 @st.dialog("Log the charge")
 def stop_charge_callback():
     st.session_state.operation = None
-    st.session_state.operation_end_date = datetime.now().date()
-    st.session_state.operation_end_time = datetime.now().time()
-    st.session_state.operation_end_location = get_location_coordinates()
-    st.write("Charge stopped")
+    # st.session_state.operation_end_date = datetime.now().date()
+    # st.session_state.operation_end_time = datetime.now().time()
+    # st.session_state.operation_end_city, st.session_state.operation_end_location = get_location_coordinates()
+    
+    overwrite = False
+    register_session_state("operation_end_date", datetime.now().date(), overwrite=overwrite)
+    register_session_state("operation_end_time", datetime.now().time(), overwrite=overwrite)
+
+    location_data = get_location_coordinates()
+    register_session_state("operation_end_city", location_data.get("city"), overwrite=overwrite)
+    register_session_state("operation_end_location", (location_data.get("latitude"), location_data.get("longitude")), overwrite=overwrite)
+    
+    register_session_state("end_battery_level", random.randint(10, 90), overwrite=overwrite)
+
+    if overwrite or "weather" not in st.session_state:
+        with st.spinner("Fetching Data"):
+            st.session_state.weather = str(asyncio.run(get_weather(st.session_state.operation_end_city)))
+
+    
+    st.success("Charge stopped")
 
     form_params = form_params_template(operation="Charge")
 
@@ -234,7 +305,9 @@ def ride_logger():
     """
     if st.session_state.operation == "Ride":
         st.warning("Ride in progress", width="stretch")
-        st.button("Stop", use_container_width=True, on_click=stop_ride_callback)
+        # st.button("Stop", use_container_width=True, on_click=stop_ride_callback)
+        if st.button("Stop", use_container_width=True):
+            stop_ride_callback()
     
     elif st.session_state.operation == "Charge":
         st.warning("Chargeing in progress", width="stretch")
@@ -270,5 +343,8 @@ def model_inference(car_df):
 
 
 if __name__ == "__main__":
+    if os.name == 'nt':
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+  
     conn = st.connection("mysql", type="sql", ttl=0)
     ui_landing_page()

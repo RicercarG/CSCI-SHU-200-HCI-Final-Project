@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS `user_car_history_table` (
     `end_time` TIME COMMENT '熄火或结束充电时间',
     `end_location_latitude` DECIMAL(9,6) COMMENT '熄火或结束充电位置纬度',
     `end_location_longitude` DECIMAL(9,6) COMMENT '熄火或结束充电位置经度',
-    `weather` ENUM('Sunny', 'Cloudy', 'Rainy', 'Snowy', 'Windy', 'Foggy', 'Stormy') COMMENT '天气状况',
+    `weather` ENUM('Sunny', 'Partly Cloudy', 'Cloudy', 'Very Cloudy', 'Fog', 'Light Showers', 'Light Sleet Showers', 'Light Sleet', 'Thundery Showers', 'Light Snow', 'Heavy Snow', 'Light Rain', 'Heavy Showers', 'Heavy Rain', 'Light Snow Showers', 'Heavy Snow Showers', 'Thundery Heavy Rain', 'Thundery Snow Showers') COMMENT '天气状况',
     `paid` DECIMAL(10,2) NULL COMMENT '充电花费 (仅当 type 为 charge 时有效)',
     `end_battery_level` INT NOT NULL COMMENT '事件结束时剩余电池百分比 (0-100)',
     FOREIGN KEY (`user_car_id`) REFERENCES `user_car_table`(`user_car_id`) ON DELETE CASCADE ON UPDATE CASCADE,
