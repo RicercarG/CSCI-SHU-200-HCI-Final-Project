@@ -1,3 +1,6 @@
+import urllib.request
+import json
+
 import streamlit as st
 import pandas as pd
 import random
@@ -23,7 +26,10 @@ def ui_map_page():
     st.title("Charging Stations Nearby")
 
     # get current location
-    current_location = [31.224361, 121.469170]
+    url = "https://ipapi.co/json/"  # Free IP geolocation API
+    with urllib.request.urlopen(url) as response:
+        data = json.loads(response.read())
+    current_location = (data['latitude'], data['longitude'])
     # get charging stations
     df = get_charging_stations(current_location)
     # display map with charging stations

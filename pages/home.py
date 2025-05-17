@@ -13,16 +13,6 @@ import pandas as pd
 from streamlit_option_menu import option_menu
 from sqlalchemy import text
 
-CAR_MODELS = [
-    "Tesla Model 3", "Tesla Model S", "Tesla Model X", "Tesla Model Y",
-    "Nissan Leaf", "Chevrolet Bolt EV", "BMW i3", "Audi e-tron",
-    "Porsche Taycan", "Hyundai Kona Electric", "Kia Niro EV", "Volkswagen ID.4",
-    "Ford Mustang Mach-E", "Polestar 2", "Rivian R1T", "Lucid Air"
-]
-
-# WEATHER_CONDITIONS = ["Sunny", "Cloudy", "Rainy", "Snowy", "Windy", "Foggy", "Stormy"]
-
-
 def ui_landing_page():
     """
     The main landing page of the app.
@@ -60,37 +50,34 @@ def ui_landing_page():
 
     with st.container(border=True, key="car_switch_container"):
 
-        prediction = model_inference(ride_history_df[ride_history_df["user_car_id"] == user_car_id])
+        if st.session_state.operation == None:
+            st.progress(st.session_state.current_car.battery_level / 100, text=f"Battery Level: {st.session_state.current_car.battery_level}%")
 
-        st.progress(st.session_state.current_car.battery_level / 100, text=f"Battery Level: {st.session_state.current_car.battery_level}%")
+            prediction = model_inference(ride_history_df[ride_history_df["user_car_id"] == user_car_id])
+            if prediction:
+                st.warning("Based on your usage pattern, we recommend you charge this car before driving. ")
+            else:
+                st.success("We don't think you need to charge. Happy driving! ")
 
-        if prediction:
-            st.warning("Based on your usage pattern, we recommend you charge this car before driving. ")
+            # st.info("Click to start a new ride", width="stretch", icon="🚗")
+            col_left, col_right = st.columns(2, vertical_alignment="top")
+            with col_left:
+                st.button("🚙 Start A New Ride", use_container_width=True, on_click=start_operation_callback, args=("Ride",), type="primary")
+            with col_right:
+                st.button("🔋 Begin Charging", use_container_width=True, on_click=start_operation_callback, args=("Charge", ), type="secondary")
 
-        # if prediction:
-        #     if st.session_state.current_car.battery_level > 50:
-        #         text = "The car is full of juice. However, we highly "
-        #     else:
-        #         text = "We "
-
-        #     text += "recommend you charge this car before driving. "
-        # else:
-        #     text = "No need to charge this car. Have fun driving! "
-
-        # if st.session_state.current_car.battery_level > 80:
-        #     text = "This car is full of juice. "
-        # elif 80 > st.session_state.current_car.battery_level >= 30:
-        #     text = "This car is half full. "
-        # else:
-        #     text = "This car is low on juice. Please charge it before driving."
-        # func = partial(stream_text, text=text)
-        # st.write_stream(func)
-    
-
-    
-    ########## UI for logging rides ##########
-    with st.container(border=True):
-        ride_logger()
+        elif st.session_state.operation == "Ride":
+            st.info("Ride in progress", width="stretch")
+            # st.button("Stop", use_container_width=True, on_click=stop_ride_callback)
+            if st.button("Stop", use_container_width=True):
+                stop_ride_callback()
+        
+        elif st.session_state.operation == "Charge":
+            st.info("Chargeing in progress", width="stretch")
+            st.button("Stop", use_container_width=True, on_click=stop_charge_callback)
+        
+        else:
+            raise NotImplementedError
     
 
     ########## UI for ride history ##########
@@ -115,12 +102,6 @@ def stream_text(text):
 
 
 def get_location_coordinates():
-    # """
-    # Randomly generate latitude and longitude coordinates for DEMO usage
-    # """
-    # latitude = random.uniform(30.70, 31.53)
-    # longitude = random.uniform(120.85, 122.12)
-
     url = "https://ipapi.co/json/"  # Free IP geolocation API
     with urllib.request.urlopen(url) as response:
         data = json.loads(response.read())
@@ -272,9 +253,6 @@ def stop_ride_callback():
 @st.dialog("Log the charge")
 def stop_charge_callback():
     st.session_state.operation = None
-    # st.session_state.operation_end_date = datetime.now().date()
-    # st.session_state.operation_end_time = datetime.now().time()
-    # st.session_state.operation_end_city, st.session_state.operation_end_location = get_location_coordinates()
     
     overwrite = False
     register_session_state("operation_end_date", datetime.now().date(), overwrite=overwrite)
@@ -298,27 +276,6 @@ def stop_charge_callback():
     if st.button("Log this charge!", type="primary", use_container_width=True):
         commit_data_callback(form_params=form_params)
         st.rerun()
-
-def ride_logger():
-    """
-    The actual UI for logging a ride/charge.
-    """
-    if st.session_state.operation == "Ride":
-        st.warning("Ride in progress", width="stretch")
-        # st.button("Stop", use_container_width=True, on_click=stop_ride_callback)
-        if st.button("Stop", use_container_width=True):
-            stop_ride_callback()
-    
-    elif st.session_state.operation == "Charge":
-        st.warning("Chargeing in progress", width="stretch")
-        st.button("Stop", use_container_width=True, on_click=stop_charge_callback)
-    else:
-        st.info("Click to start a new ride", width="stretch", icon="🚗")
-        col_left, col_right = st.columns(2, vertical_alignment="top")
-        with col_left:
-            st.button("Start A Ride", use_container_width=True, on_click=start_operation_callback, args=("Ride",), type="primary")
-        with col_right:
-            st.button("Begin Charging", use_container_width=True, on_click=start_operation_callback, args=("Charge", ), type="secondary")
 
 
 def model_inference(car_df):

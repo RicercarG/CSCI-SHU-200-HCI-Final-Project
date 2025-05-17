@@ -18,7 +18,7 @@ People with electric vehicles, especially those who have multiple EVs.
 #### How it Works
 The logic is similar to an accounting software:
 
-1. During each ride/charge, the app records the parameters like weather, location and battery level at the beginning and end of each ride/charge (and charing costs).
+1. During each ride/charge, the app automatically fetches the parameters like weather, location and battery level at the beginning and end of each ride/charge (and charing costs).
 
 2. Our model learns the battery consumption pattern for each vehicle, and predicts when that vehicle will need to be recharged. (Check out our [EV Charging Predictor](https://github.com/RicercarG/CSCI-SHU-200-HCI-Final-Project/blob/main/ev_charging_predictor/README.md) for more details)
 
@@ -50,7 +50,7 @@ Create an mysql database, and run `create_tables.sql` to create tables
 
 ### Step3: Populate Data
 To ensure proper data instertion, first set the MySQL max_allowed_packet to be 256M
-``````
+```
 SET GLOBAL max_allowed_packet = 268435456;
 ```
 
@@ -59,6 +59,10 @@ After that, we can safely populate data
 python database/populate_data.py
 ```
 
+### Step4 (Optional): Train the model with the populated data
+```
+python -m ev_charging_predictor.main --mode train --data cached_table/user_car_history_table.csv --model_path models/ --epochs 20
+```
 
 ### Step4: Start the app
 ```
@@ -68,7 +72,7 @@ streamlit run app.py
 A browser page should be opened. If not please try Local URL: 
 `http://localhost:8501`
 
-To login, please select an existing user from the database `user_table`.
+**For this demo, to login, please select an existing user from the database `user_table`**.
 
 
 ## TODOs
